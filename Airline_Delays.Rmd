@@ -1,0 +1,23 @@
+---
+title: "Airline_Delay_Cause"
+authors: "Annie Chan ,Halle Davis, Salvador R. Sanchez Castro"
+date: '2022-11-07'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r Libs}
+
+```
+
+```{r Load Data}
+Airline_Delays <- read.csv('Airline_Delay_Cause.csv')
+```
+
+```{r EDA}
+str(Airline_Delay)
+```
