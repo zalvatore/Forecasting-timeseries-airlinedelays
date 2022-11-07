@@ -11,7 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r Libs}
-
+library(visdat)
+library(DataExplorer)
 ```
 
 ```{r Load Data}
@@ -19,5 +20,18 @@ Airline_Delays <- read.csv('Airline_Delay_Cause.csv')
 ```
 
 ```{r EDA}
-str(Airline_Delay)
+glimpse(Airline_Delays)
+cat("\n")
+cat("\n")
+summary(Airline_Delays)
+```
+
+```{r Counts}
+cat("Number of Carriers: ", length(unique(Airline_Delays$carrier)))
+cat("\n")
+cat("Number of Airports: ", length(unique(Airline_Delays$airport)))
+```
+
+```{r DataExplorer}
+DataExplorer::create_report(Airline_Delays)
 ```
