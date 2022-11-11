@@ -9,15 +9,30 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# **Arriving 2 Hours Early, Staying 3 Hours Late - Time-Series Analysis of Flight Delay**
+
+**Team Number**: 6
+
+**Team Leader/Representative**: Halle Davis
+
+**Full Names of Team Members**: 1. Sanchez Castro Salvador 2. Lai Ieng Chan 3. Halle Davis
+
+------------------------------------------------------------------------
+
+## Initial Load
 
 ```{r Libs}
 library(visdat)
 library(DataExplorer)
+library(dplyr)
+library(zoo)
 ```
 
 ```{r Load Data}
 Airline_Delays <- read.csv('Airline_Delay_Cause.csv')
 ```
+
+## EDA
 
 ```{r EDA}
 glimpse(Airline_Delays)
@@ -34,4 +49,18 @@ cat("Number of Airports: ", length(unique(Airline_Delays$airport)))
 
 ```{r DataExplorer}
 DataExplorer::create_report(Airline_Delays)
+```
+```{r Date Column}
+#To year-Date
+Airline_Delays$date <- as.yearmon(paste(Airline_Delays$year,
+                                        Airline_Delays$month), "%Y %m")
+#To Date type
+Airline_Delays <- transform(Airline_Delays, date = as.Date(date))
+Airline_Delays 
+```
+
+## Pre-processing
+
+```{r}
+
 ```
