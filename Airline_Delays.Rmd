@@ -26,6 +26,9 @@ library(visdat)
 library(DataExplorer)
 library(dplyr)
 library(zoo)
+library(ggplot2)
+library(plotly)
+library(htmlwidgets)
 ```
 
 ```{r Load Data}
@@ -50,6 +53,7 @@ cat("Number of Airports: ", length(unique(Airline_Delays$airport)))
 ```{r DataExplorer}
 DataExplorer::create_report(Airline_Delays)
 ```
+
 ```{r Date Column}
 #To year-Date
 Airline_Delays$date <- as.yearmon(paste(Airline_Delays$year,
@@ -61,6 +65,83 @@ Airline_Delays
 
 ## Pre-processing
 
-```{r}
-#test
+```{r Selecting Airport and Airline}
+
+airport_table <- table(Airline_Delays$airport)
+airport_table <- airport_table[order(airport_table,decreasing = TRUE)]
+
+#Airports with most flights
+airport_table
+```
+```{r Filter for PIT}
+
+Airline_Delays_Pit <- filter(Airline_Delays , airport == "PIT")
+Airline_Delays_Pit
+
+carrier_table <- table(Airline_Delays_Pit$carrier)
+carrier_table <- carrier_table[order(carrier_table,decreasing = TRUE)]
+
+#Airports with most flights
+carrier_table
+
+sum <- summary(Airline_Delays_Pit$date)
+sum
+```
+
+
+```{r view time series}
+arr_delays_pit.ts <- ts(Airline_Delays_Pit$arr_delay,
+                 start = c(2019, 1),
+                 end = c(2022, 8),
+                 freq = 12)
+autoplot(arr_delays_pit.ts,
+         series = 'PIT Delays',
+         xlab = 'Months',
+         ylab = 'Airlport Delays',
+         main = 'Delays for Pittsburgh International')
+
+carrier_delays_pit.ts <- ts(Airline_Delays_Pit$carrier_delay,
+                 start = c(2019, 1),
+                 end = c(2022, 8),
+                 freq = 12)
+autoplot(carrier_delays_pit.ts,
+         series = 'PIT Carrier Delays',
+         xlab = 'Months',
+         ylab = 'Carrier Delays',
+         main = 'Delays for Pittsburgh International')
+
+
+```
+
+
+```{r view time series}
+fig <- plot_ly(Airline_Delays_Pit,
+               type = 'scatter',
+               mode = 'lines'
+               #line = list(color = '#326ac2')
+               )%>%
+  add_trace(x = ~date,
+            y = ~arr_delay,
+            color = ~carrier_name)%>%
+  layout(showlegend = T)
+  options(warn = -1)
+
+fig <- fig %>%   layout(
+         xaxis = list(
+           title=list(text='Time',
+                      font = list(size = 20),
+                      standoff = 25),
+           tickangle=-45
+           ),
+         yaxis = list(
+           title=list(text='Airlport Delays',
+                      font = list(size = 20),
+                      standoff = 25),
+           plot_bgcolor='#e5ecf6', width = 900)
+           )
+fig
+
+
+saveWidget(fig, "Airline_Delays_Pit.html", selfcontained = F, libdir = "lib")
+
 ```
