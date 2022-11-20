@@ -46,7 +46,7 @@ Airline_Delays <- read.csv('Airline_Delay_Cause.csv')
 
 ## EDA
 
-### Initial Peek
+### Initial Peek into Data
 
 ```{r peek}
 head(Airline_Delays)
@@ -182,6 +182,14 @@ airport_table
 
 ```
 
+### Checking for Duplicates
+
+```{r}
+
+sum(duplicated(Airline_Delays_Pit))
+
+```
+
 ### Checking for Nulls
 
 ```{r Checking for Nulls}
@@ -286,6 +294,7 @@ autoplot(carrier_delays_pit.ts,
 
 
 ```
+
 ### Visualizing Time Series -- Broken Down by Carrier
 
 ```{r view time series}
