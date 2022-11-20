@@ -34,6 +34,8 @@ library(fpp2)
 library(readr)
 library(moments)
 library(caret)
+library(outliers)
+library(TSstudio)
 
 set.seed(506)
 ```
@@ -192,13 +194,16 @@ sum(sapply(Airline_Delays_Pit, function(x) sum(is.na(x))))
 
 ```{r Checking for Skew}
 
-sapply(Airline_Delays_Pit, function(x) skewness(x))
+nums <- unlist(lapply(Airline_Delays_Pit, is.numeric), use.names = FALSE)  
+Airline_Delays_Pit_Nums <- Airline_Delays_Pit[ , nums]
+
+sapply(Airline_Delays_Pit_Nums, function(x) skewness(x))
 
 ```
 
 ### Checking for Near Zero Variance
 
-```{r Checking for Skew}
+```{r Checking for NZV}
 
 length(nearZeroVar(Airline_Delays_Pit))
 degeneratecols <- nearZeroVar(Airline_Delays_Pit)
@@ -208,21 +213,27 @@ degeneratecols #Airport, Airport Name, Security Counts, Security Delays
 
 ### Checking for MultiCollinearity
 
-```{r Checking for Skew}
+```{r Checking for MultiCollinearity}
 
-highCorr <- findCorrelation(cor(Airline_Delays_Pit), cutoff = .75)
-length(highCorr)
-
-```
-
-### Checking for MultiCollinearity
-
-```{r Checking for Skew}
-
-highCorr <- findCorrelation(cor(Airline_Delays_Pit), cutoff = .75)
-length(highCorr)
+highCorr <- findCorrelation(cor(Airline_Delays_Pit_Nums), cutoff = .75)
+highCorr
 
 ```
+
+### Checking for Outliers
+
+```{r Checking for Outliers}
+
+boxplot(Airline_Delays_Pit$arr_del15, main = "Boxplot")
+
+subset(Airline_Delays_Pit, arr_flights < arr_del15)
+
+```
+While it seems that there are outliers based on the simple 1.5 * the IQR rule
+for the number of delayed flights (our dependent variable of interest), 
+there is no case where the number of delayed flights is greater than the number
+of arriving flights, meaning that all the data is reasonable and likely to be
+meaningful.
 
 ### Counts by Air Carrier
 
@@ -249,7 +260,7 @@ arr_del15_pit.ts <- ts(Airline_Delays_Pit$arr_del15, ## arr_del15 is the number 
                  freq = 12)
 autoplot(arr_delays_pit.ts,
          series = 'PIT Delays',
-         xlab = 'Months',
+         xlab = 'Date',
          ylab = 'Airlport Delays',
          main = 'Delays for Pittsburgh International')
 
@@ -259,7 +270,7 @@ arr_delays_pit.ts <- ts(Airline_Delays_Pit$arr_delay, ## arr_delay is the total 
                  freq = 12)
 autoplot(arr_delays_pit.ts,
          series = 'PIT Delays',
-         xlab = 'Months',
+         xlab = 'Date',
          ylab = 'Airport Delay in Minutes',
          main = 'Delays for Pittsburgh International')
 
@@ -269,7 +280,7 @@ carrier_delays_pit.ts <- ts(Airline_Delays_Pit$carrier_delay, ## carrier delay i
                  freq = 12)
 autoplot(carrier_delays_pit.ts,
          series = 'PIT Carrier Delays',
-         xlab = 'Months',
+         xlab = 'Date',
          ylab = 'Carrier Delays',
          main = 'Delays for Pittsburgh International')
 
@@ -306,6 +317,35 @@ fig
 
 
 saveWidget(fig, "Airline_Delays_Pit.html", selfcontained = F, libdir = "lib")
+
+```
+
+
+### Finding Relationship between Dependent and Independent
+
+```{r Statistical Tests of Significance}
+
+## Month
+chisq.test(Airline_Delays_Pit$month, Airline_Delays_Pit$arr_del15, correct=FALSE)
+#Not a significant relationship between month and delays
+
+## Year
+chisq.test(Airline_Delays_Pit$year, Airline_Delays_Pit$arr_del15, correct=FALSE)
+t.test(Airline_Delays_Pit$year, Airline_Delays_Pit$arr_del15)
+#Significant relationship between year and delays
+
+```
+
+```{r Autocorrelation Plots}
+
+arr_del15_pit.ts %>% 
+  acf(lag.max = 300, 
+      main = "Autocorrelation Plot - R")
+
+# pacf R time series
+arr_del15_pit.ts %>%
+  pacf(lag.max = 300,
+       main = "Partial Autocorrelation Plot - R")
 
 ```
 
