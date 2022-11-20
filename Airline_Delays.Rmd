@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ------------------------------------------------------------------------
 
-## Initial Load
+## Libraries and Data
 
 ```{r Libs}
 library(visdat)
@@ -32,6 +32,8 @@ library(htmlwidgets)
 library(tidyverse)
 library(fpp2)
 library(readr)
+library(moments)
+library(caret)
 
 set.seed(506)
 ```
@@ -42,8 +44,13 @@ Airline_Delays <- read.csv('Airline_Delay_Cause.csv')
 
 ## EDA
 
+### Initial Peek
+
+```{r peek}
+head(Airline_Delays)
+```
+
 ```{r EDA}
-# Initial peek into data
 glimpse(Airline_Delays)
 cat("\n")
 cat("\n")
@@ -51,6 +58,8 @@ summary(Airline_Delays)
 ```
 
 ```{r Counts}
+cat("Dimensions: ", dim(Airline_Delays))
+cat("\n")
 cat("Number of Carriers: ", length(unique(Airline_Delays$carrier)))
 cat("\n")
 cat("Number of Airports: ", length(unique(Airline_Delays$airport)))
@@ -59,6 +68,96 @@ cat("Number of Airports: ", length(unique(Airline_Delays$airport)))
 ```{r DataExplorer}
 DataExplorer::create_report(Airline_Delays)
 ```
+
+### Categorical Variables Visualized
+
+```{r Categorical Variables}
+
+## Carrier
+barplot(table(Airline_Delays$carrier), main="Bar Graph of Carrier",
+        ylab="Frequency", xlab = "Carrier")
+#Didn't visualize carrier name because its redundant to carrier
+
+## Airport
+barplot(table(Airline_Delays$airport), main="Bar Graph of Airport",
+        ylab="Frequency", xlab = "Airport")
+#Didn't visualize airport name because its redundant to airport
+
+## Year
+barplot(table(Airline_Delays$year), main="Bar Graph of Year",
+        ylab="Frequency", xlab = "Year")
+
+## Month
+barplot(table(Airline_Delays$month), main="Bar Graph of Month",
+        ylab="Frequency", xlab = "Month")
+
+```
+
+### Numerical Variables Visualized
+
+```{r Numerical Variables}
+
+## arr_flights
+hist(Airline_Delays$arr_flights, main="Histogram of Arriving Flights",
+     ylab="Frequency", xlab = "Arriving Flights")
+
+## arr_del15
+hist(Airline_Delays$arr_del15, main="Histogram of Delayed Flights",
+     ylab="Frequency", xlab = "Delayed Flights")
+
+## arr_cancelled
+hist(Airline_Delays$arr_cancelled, main="Histogram of Cancelled Flights",
+     ylab="Frequency", xlab = "Cancelled Flights")
+
+## arr_diverted
+hist(Airline_Delays$arr_diverted, main="Histogram of Diverted Flights",
+     ylab="Frequency", xlab = "Diverted Flights")
+
+## carrier_ct
+hist(Airline_Delays$carrier_ct, main="Histogram of Flights Delayed due to Carrier",
+     ylab="Frequency", xlab = "Carrier Delays")
+
+## carrier_delay
+hist(Airline_Delays$carrier_delay, main="Histogram of Time Delayed due to Carrier",
+     ylab="Frequency", xlab = "Carrier Delay Time")
+
+## weather_ct
+hist(Airline_Delays$weather_ct, main="Histogram of Flights Delayed due to Weather",
+     ylab="Frequency", xlab = "Weather Delays")
+
+## weather_delay
+hist(Airline_Delays$weather_delay, main="Histogram of Time Delayed due to Weather",
+     ylab="Frequency", xlab = "Weather Delay Time")
+
+## nas_ct
+hist(Airline_Delays$nas_ct, main="Histogram of Flights Delayed due to NAS",
+     ylab="Frequency", xlab = "NAS Delays")
+
+## nas_delay
+hist(Airline_Delays$nas_delay, main="Histogram of Time Delayed due to NAS",
+     ylab="Frequency", xlab = "NAS Delay Time")
+
+## security_ct
+hist(Airline_Delays$security_ct, main="Histogram of Flights Delayed due to Security",
+     ylab="Frequency", xlab = "Security Delays")
+
+## security_delay
+hist(Airline_Delays$security_delay, main="Histogram of Time Delayed due to Security",
+     ylab="Frequency", xlab = "Security Delay Time")
+
+## late_aircraft_ct
+hist(Airline_Delays$late_aircraft_ct, main="Histogram of Flights Delayed due to Late Aircraft",
+     ylab="Frequency", xlab = "Late Aircraft Delays")
+
+## late_aircraft_delay
+hist(Airline_Delays$late_aircraft_delay, main="Histogram of Time Delayed due to Late Aircraft",
+     ylab="Frequency", xlab = "Late Aircraft Delay Time")
+
+```
+
+## Pre-Processing
+
+### Date Transformation
 
 ```{r Date Column}
 #To year-Date
@@ -69,7 +168,7 @@ Airline_Delays <- transform(Airline_Delays, date = as.Date(date))
 Airline_Delays 
 ```
 
-## Pre-processing
+### Filtering to One Airport (Based on # of Observations)
 
 ```{r Selecting Airport and Airline}
 
@@ -78,7 +177,55 @@ airport_table <- airport_table[order(airport_table,decreasing = TRUE)]
 
 #Airports with most flights
 airport_table
+
 ```
+
+### Checking for Nulls
+
+```{r Checking for Nulls}
+
+sum(sapply(Airline_Delays_Pit, function(x) sum(is.na(x))))
+
+```
+
+### Checking for Skew
+
+```{r Checking for Skew}
+
+sapply(Airline_Delays_Pit, function(x) skewness(x))
+
+```
+
+### Checking for Near Zero Variance
+
+```{r Checking for Skew}
+
+length(nearZeroVar(Airline_Delays_Pit))
+degeneratecols <- nearZeroVar(Airline_Delays_Pit)
+degeneratecols #Airport, Airport Name, Security Counts, Security Delays
+
+```
+
+### Checking for MultiCollinearity
+
+```{r Checking for Skew}
+
+highCorr <- findCorrelation(cor(Airline_Delays_Pit), cutoff = .75)
+length(highCorr)
+
+```
+
+### Checking for MultiCollinearity
+
+```{r Checking for Skew}
+
+highCorr <- findCorrelation(cor(Airline_Delays_Pit), cutoff = .75)
+length(highCorr)
+
+```
+
+### Counts by Air Carrier
+
 ```{r Filter for PIT}
 
 Airline_Delays_Pit <- filter(Airline_Delays , airport == "PIT")
@@ -93,10 +240,10 @@ carrier_table
 sum <- summary(Airline_Delays_Pit$date)
 sum
 ```
-
+### Visualizing Time Series -- Delays over Time
 
 ```{r view time series}
-arr_delays_pit.ts <- ts(Airline_Delays_Pit$arr_delay,
+arr_del15_pit.ts <- ts(Airline_Delays_Pit$arr_del15, ## arr_del15 is the number of flights that were delayed by                                                        at least 15 minutes
                  start = c(2019, 1),
                  end = c(2022, 8),
                  freq = 12)
@@ -106,7 +253,17 @@ autoplot(arr_delays_pit.ts,
          ylab = 'Airlport Delays',
          main = 'Delays for Pittsburgh International')
 
-carrier_delays_pit.ts <- ts(Airline_Delays_Pit$carrier_delay,
+arr_delays_pit.ts <- ts(Airline_Delays_Pit$arr_delay, ## arr_delay is the total amount of delay in minutes
+                 start = c(2019, 1),
+                 end = c(2022, 8),
+                 freq = 12)
+autoplot(arr_delays_pit.ts,
+         series = 'PIT Delays',
+         xlab = 'Months',
+         ylab = 'Airport Delay in Minutes',
+         main = 'Delays for Pittsburgh International')
+
+carrier_delays_pit.ts <- ts(Airline_Delays_Pit$carrier_delay, ## carrier delay is a type of delay
                  start = c(2019, 1),
                  end = c(2022, 8),
                  freq = 12)
@@ -118,7 +275,7 @@ autoplot(carrier_delays_pit.ts,
 
 
 ```
-
+### Visualizing Time Series -- Broken Down by Carrier
 
 ```{r view time series}
 fig <- plot_ly(Airline_Delays_Pit,
@@ -127,7 +284,7 @@ fig <- plot_ly(Airline_Delays_Pit,
                #line = list(color = '#326ac2')
                )%>%
   add_trace(x = ~date,
-            y = ~arr_delay,
+            y = ~arr_del15, ## changed to airdel15
             color = ~carrier_name)%>%
   layout(showlegend = T)
   options(warn = -1)
@@ -152,13 +309,16 @@ saveWidget(fig, "Airline_Delays_Pit.html", selfcontained = F, libdir = "lib")
 
 ```
 
+### Partitioning Data to Training and Validation
+
 ```{r}
-# To partition the data using the period until December 1993 as the training period
 Airline_Delays_Pit.Valid <- 12
 Airline_Delays_Pit.train <- length(arr_delays_pit.ts) - Airline_Delays_Pit.Valid
 Airline_Delays_Pit.train.ts <- window(arr_delays_pit.ts, start = c(2019,1), end = c(2019, Airline_Delays_Pit.train))
 Airline_Delays_Pit.valid.ts <- window(arr_delays_pit.ts, start = c(2019, Airline_Delays_Pit.train +1), end = c(2019, Airline_Delays_Pit.train + Airline_Delays_Pit.Valid))
 ```
+
+## Modeling
 
 ```{r}
 # Use the ets function with the option model = "AAM" to fit Holt-Winter’s 
