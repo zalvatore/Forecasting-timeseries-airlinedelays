@@ -68,7 +68,8 @@ cat("Number of Airports: ", length(unique(Airline_Delays$airport)))
 ```
 
 ```{r DataExplorer}
-DataExplorer::create_report(Airline_Delays)
+#Hash out to improve when running
+#DataExplorer::create_report(Airline_Delays)
 ```
 
 ### Categorical Variables Visualized
@@ -286,6 +287,7 @@ carrier_delays_pit.ts <- ts(Airline_Delays_Pit$carrier_delay, ## carrier delay i
                  start = c(2019, 1),
                  end = c(2022, 8),
                  freq = 12)
+
 autoplot(carrier_delays_pit.ts,
          series = 'PIT Carrier Delays',
          xlab = 'Date',
@@ -363,8 +365,13 @@ arr_del15_pit.ts %>%
 ```{r}
 Airline_Delays_Pit.Valid <- 12
 Airline_Delays_Pit.train <- length(arr_delays_pit.ts) - Airline_Delays_Pit.Valid
-Airline_Delays_Pit.train.ts <- window(arr_delays_pit.ts, start = c(2019,1), end = c(2019, Airline_Delays_Pit.train))
-Airline_Delays_Pit.valid.ts <- window(arr_delays_pit.ts, start = c(2019, Airline_Delays_Pit.train +1), end = c(2019, Airline_Delays_Pit.train + Airline_Delays_Pit.Valid))
+Airline_Delays_Pit.train.ts <- window(arr_delays_pit.ts,
+                                      start = c(2019,1),
+                                      end = c(2019, Airline_Delays_Pit.train))
+
+Airline_Delays_Pit.valid.ts <- window(arr_delays_pit.ts,
+                                      start = c(2019, Airline_Delays_Pit.train +1),
+                                      end = c(2019, Airline_Delays_Pit.train + Airline_Delays_Pit.Valid))
 ```
 
 ## Modeling
