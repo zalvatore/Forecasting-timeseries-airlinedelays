@@ -1,6 +1,6 @@
 ---
 title: "Airline_Delay_Cause"
-authors: "Annie Chan ,Halle Davis, Salvador R. Sanchez Castro"
+authors: "Annie Chan, Halle Davis, Salvador R. Sanchez Castro"
 date: '2022-11-07'
 output: html_document
 ---
