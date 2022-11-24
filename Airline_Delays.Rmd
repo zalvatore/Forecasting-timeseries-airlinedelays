@@ -337,12 +337,15 @@ saveWidget(fig, "Airline_Delays_Pit.html", selfcontained = F, libdir = "lib")
 ```{r Statistical Tests of Significance}
 
 ## Month
-chisq.test(Airline_Delays_Pit$month, Airline_Delays_Pit$arr_del15, correct=FALSE)
+chisq.test(Airline_Delays_Pit$month, Airline_Delays_Pit$arr_del15,
+           correct=FALSE)
 #Not a significant relationship between month and delays
 
 ## Year
-chisq.test(Airline_Delays_Pit$year, Airline_Delays_Pit$arr_del15, correct=FALSE)
-t.test(Airline_Delays_Pit$year, Airline_Delays_Pit$arr_del15)
+chisq.test(Airline_Delays_Pit$year, Airline_Delays_Pit$arr_del15,
+           correct=FALSE)
+t.test(Airline_Delays_Pit$year,
+       Airline_Delays_Pit$arr_del15)
 #Significant relationship between year and delays
 
 ```
@@ -362,8 +365,8 @@ arr_del15_pit.ts %>%
 
 ### Partitioning Data to Training and Validation
 
-```{r}
-Airline_Delays_Pit.Valid <- 12
+```{r Spliting Data}
+Airline_Delays_Pit.Valid <- 6
 Airline_Delays_Pit.train <- length(arr_delays_pit.ts) - Airline_Delays_Pit.Valid
 Airline_Delays_Pit.train.ts <- window(arr_delays_pit.ts,
                                       start = c(2019,1),
@@ -372,14 +375,50 @@ Airline_Delays_Pit.train.ts <- window(arr_delays_pit.ts,
 Airline_Delays_Pit.valid.ts <- window(arr_delays_pit.ts,
                                       start = c(2019, Airline_Delays_Pit.train +1),
                                       end = c(2019, Airline_Delays_Pit.train + Airline_Delays_Pit.Valid))
+
+autoplot(Airline_Delays_Pit.train.ts, series = 'Train') +
+  autolayer(Airline_Delays_Pit.valid.ts, series = 'Valid')
+
 ```
 
 ## Modeling
 
-```{r}
+```{r ETS}
 # Use the ets function with the option model = "AAM" to fit Holt-Winter’s 
 # exponential smoothing model with additive error, additive trend & multiplicative seasonality
-wine.hwin <- ets(Airline_Delays_Pit.train.ts, model = "AAM", alpha = .2, gamma = .05, restrict = FALSE)
+wine.hwin <- ets(Airline_Delays_Pit.train.ts,
+                 model = "AAM",
+                 alpha = .2,
+                 gamma = .05,
+                 restrict = FALSE
+                 )
 wine.hwin
 ```
 
+
+```{r arima}
+
+#first difference
+Airline_Delays_Pit.train.ts %>% 
+  diff() %>% 
+  ggtsdisplay(main="First Difference")
+
+#Autoarima
+auto_fit <- auto.arima(Airline_Delays_Pit.train.ts)
+summary(auto_fit)
+
+#Arima
+fit <- arima(Airline_Delays_Pit.train.ts, order=c(3,1,0))
+summary(fit)
+
+#Residuals
+checkresiduals(auto_fit)
+
+#Forcast
+forecast(auto_fit, h = 6)
+
+#Plot
+autoplot(forecast(auto_fit, h = 6))
+
+autoplot(fit)
+```
