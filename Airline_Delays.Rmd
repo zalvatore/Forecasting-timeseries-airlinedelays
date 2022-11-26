@@ -373,48 +373,101 @@ Airline_Delays_Pit.test <- window(arr_delays_pit.ts, start = c(2022,1))
 autoplot(Airline_Delays_Pit.train, series = 'Train') +
   autolayer(Airline_Delays_Pit.test, series = 'Valid')
 ```
+## Modeling
 
+```{r Modeling Variables}
+
+forecast.periods <- 8
+y <- Airline_Delays_Pit.train
 
 ```
 
-## Modeling
+```{r naive}
+#Naive
+naive.model <- naive(y, h = forecast.periods)
+
+#SeasonalNaive
+naive.season.model <- snaive(y, h = forecast.periods)
+
+#Mean
+mean.model <- meanf(y, h = forecast.periods)
+
+#Plot
+autoplot(y, series = 'Training') +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation') +
+  autolayer(naive.model, alpha = .3, series = 'Naive') 
+
+autoplot(y, series = 'Training') +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation') +
+  autolayer(naive.season.model, alpha = .3, series = 'Seasonal Naive') 
+
+autoplot(y, series = 'Training') +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation') +
+  autolayer(mean.model, alpha = .3, series = 'Mean') 
+
+```
 
 ```{r ETS}
+
 # Use the ets function with the option model = "AAM" to fit Holt-Winter’s 
 # exponential smoothing model with additive error, additive trend & multiplicative seasonality
-wine.hwin <- ets(Airline_Delays_Pit.train,
+wine.hwin <- ets(y,
                  model = "AAM",
                  alpha = .2,
                  gamma = .05,
                  restrict = FALSE
                  )
 wine.hwin
+
+ets.pred <- forecast(wine.hwin, h=forecast.periods)
+
+#Plot
+autoplot(y, series = 'Training') +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation') +
+  autolayer(ets.pred, alpha = .3, series = 'Forecast') 
 ```
 
 
 ```{r arima}
 
 #first difference
-Airline_Delays_Pit.train.ts %>% 
+y %>% 
   diff() %>% 
   ggtsdisplay(main="First Difference")
 
+
 #Autoarima
-auto_fit <- auto.arima(Airline_Delays_Pit.train.ts)
+auto_fit <- auto.arima(y)
 summary(auto_fit)
 
 #Arima
-fit <- arima(Airline_Delays_Pit.train.ts, order=c(3,1,0))
+fit <- arima(y , order=c(3,1,0))
 summary(fit)
 
 #Residuals
 checkresiduals(auto_fit)
+checkresiduals(fit)
 
-#Forcast
-forecast(auto_fit, h = 6)
+#Forecast
+auto.fore <- forecast(auto_fit, h=forecast.periods)
+fore <- forecast(fit, h = forecast.periods)
 
 #Plot
-autoplot(forecast(auto_fit, h = 6))
+autoplot(y, series = 'Training') +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation') +
+  autolayer(auto.fore, alpha = .3, series = 'Forecast')
+
+autoplot(y, series = 'Training') +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
+  autolayer(fore, alpha = .3, series = 'Forecast') 
 
 autoplot(fit)
+```
+
+
+```{r Testing Area}
+
+Airline_Delays_Pit.train
+
+naive.model
 ```
