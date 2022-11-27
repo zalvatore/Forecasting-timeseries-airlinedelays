@@ -182,6 +182,22 @@ airport_table <- airport_table[order(airport_table,decreasing = TRUE)]
 airport_table
 
 ```
+### Counts by Air Carrier
+
+```{r Filter for PIT}
+
+Airline_Delays_Pit <- filter(Airline_Delays , airport == "PIT")
+Airline_Delays_Pit
+
+carrier_table <- table(Airline_Delays_Pit$carrier)
+carrier_table <- carrier_table[order(carrier_table,decreasing = TRUE)]
+
+#Airports with most flights
+carrier_table
+
+sum <- summary(Airline_Delays_Pit$date)
+sum
+```
 
 ### Checking for Duplicates
 
@@ -244,22 +260,7 @@ there is no case where the number of delayed flights is greater than the number
 of arriving flights, meaning that all the data is reasonable and likely to be
 meaningful.
 
-### Counts by Air Carrier
 
-```{r Filter for PIT}
-
-Airline_Delays_Pit <- filter(Airline_Delays , airport == "PIT")
-Airline_Delays_Pit
-
-carrier_table <- table(Airline_Delays_Pit$carrier)
-carrier_table <- carrier_table[order(carrier_table,decreasing = TRUE)]
-
-#Airports with most flights
-carrier_table
-
-sum <- summary(Airline_Delays_Pit$date)
-sum
-```
 ### Visualizing Time Series -- Delays over Time
 
 ```{r view time series}
@@ -267,31 +268,23 @@ arr_del15_pit.ts <- ts(Airline_Delays_Pit$arr_del15, ## arr_del15 is the number 
                  start = c(2019, 1),
                  end = c(2022, 8),
                  freq = 12)
-autoplot(arr_delays_pit.ts,
-         series = 'PIT Delays',
-         xlab = 'Date',
-         ylab = 'Airlport Delays',
-         main = 'Delays for Pittsburgh International')
 
-arr_delays_pit.ts <- ts(Airline_Delays_Pit$arr_delay, ## arr_delay is the total amount of delay in minutes
+#Sum Delays by month
+Airline_Delays_Pit_sum <- Airline_Delays_Pit %>%
+  group_by(date) %>%
+  summarise(Freq = sum(arr_delay))
+
+
+arr_delays_pit.ts <- ts(Airline_Delays_Pit_sum$Freq  , ## arr_delay is the total amount of delay in minutes
                  start = c(2019, 1),
                  end = c(2022, 8),
                  freq = 12)
+
+
 autoplot(arr_delays_pit.ts,
          series = 'PIT Delays',
          xlab = 'Date',
          ylab = 'Airport Delay in Minutes',
-         main = 'Delays for Pittsburgh International')
-
-carrier_delays_pit.ts <- ts(Airline_Delays_Pit$carrier_delay, ## carrier delay is a type of delay
-                 start = c(2019, 1),
-                 end = c(2022, 8),
-                 freq = 12)
-
-autoplot(carrier_delays_pit.ts,
-         series = 'PIT Carrier Delays',
-         xlab = 'Date',
-         ylab = 'Carrier Delays',
          main = 'Delays for Pittsburgh International')
 
 
@@ -344,6 +337,7 @@ chisq.test(Airline_Delays_Pit$month, Airline_Delays_Pit$arr_del15,
 ## Year
 chisq.test(Airline_Delays_Pit$year, Airline_Delays_Pit$arr_del15,
            correct=FALSE)
+
 t.test(Airline_Delays_Pit$year,
        Airline_Delays_Pit$arr_del15)
 #Significant relationship between year and delays
@@ -352,13 +346,13 @@ t.test(Airline_Delays_Pit$year,
 
 ```{r Autocorrelation Plots}
 
-arr_del15_pit.ts %>% 
-  acf(lag.max = 300, 
+arr_delays_pit.ts  %>% 
+  acf(lag.max = 40, 
       main = "Autocorrelation Plot - R")
 
 # pacf R time series
-arr_del15_pit.ts %>%
-  pacf(lag.max = 300,
+arr_delays_pit.ts %>%
+  pacf(lag.max = 40,
        main = "Partial Autocorrelation Plot - R")
 
 ```
@@ -435,13 +429,18 @@ y %>%
   diff() %>% 
   ggtsdisplay(main="First Difference")
 
+#first difference
+y %>% 
+  diff() %>% 
+  diff() %>% 
+  ggtsdisplay(main="Second Difference")
 
 #Autoarima
 auto_fit <- auto.arima(y)
 summary(auto_fit)
 
 #Arima
-fit <- arima(y , order=c(3,1,0))
+fit <- arima(y , order=c(3,0,1))
 summary(fit)
 
 #Residuals
@@ -455,7 +454,7 @@ fore <- forecast(fit, h = forecast.periods)
 #Plot
 autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation') +
-  autolayer(auto.fore, alpha = .3, series = 'Forecast')
+  autolayer(auto.fore, alpha = .3, series = 'Auto Forecast')
 
 autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
@@ -467,7 +466,8 @@ autoplot(fit)
 
 ```{r Testing Area}
 
-Airline_Delays_Pit.train
 
-naive.model
+#out <- Airline_Delays_Pit[(order(as.Date(Airline_Delays_Pit$date))),]
+Airline_Delays_Pit_sum
+
 ```
