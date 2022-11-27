@@ -361,8 +361,8 @@ arr_delays_pit.ts %>%
 
 ```{r Spliting Data}
 
-Airline_Delays_Pit.train <- window(arr_delays_pit.ts, end = c(2021,12))
-Airline_Delays_Pit.test <- window(arr_delays_pit.ts, start = c(2022,1))
+Airline_Delays_Pit.train <- window(arr_delays_pit.ts, end = c(2022,4))
+Airline_Delays_Pit.test <- window(arr_delays_pit.ts, start = c(2022,5))
 
 autoplot(Airline_Delays_Pit.train, series = 'Train') +
   autolayer(Airline_Delays_Pit.test, series = 'Valid')
@@ -371,7 +371,7 @@ autoplot(Airline_Delays_Pit.train, series = 'Train') +
 
 ```{r Modeling Variables}
 
-forecast.periods <- 8
+forecast.periods <- 4
 y <- Airline_Delays_Pit.train
 
 ```
