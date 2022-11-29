@@ -184,10 +184,14 @@ airport_table
 ```
 ### Counts by Air Carrier
 
-```{r Filter for PIT}
+```{r Filter for Airport}
 
 Airline_Delays_Pit <- filter(Airline_Delays , airport == "PIT")
 Airline_Delays_Pit
+
+
+Airline_Delays_DFW <- filter(Airline_Delays , airport == "DFW")
+Airline_Delays_DFW
 
 carrier_table <- table(Airline_Delays_Pit$carrier)
 carrier_table <- carrier_table[order(carrier_table,decreasing = TRUE)]
@@ -274,8 +278,16 @@ Airline_Delays_Pit_sum <- Airline_Delays_Pit %>%
   group_by(date) %>%
   summarise(Freq = sum(arr_delay))
 
+Airline_Delays_Dfw_sum <- Airline_Delays_DFW %>%
+  group_by(date) %>%
+  summarise(Freq = sum(arr_delay))
 
 arr_delays_pit.ts <- ts(Airline_Delays_Pit_sum$Freq  , ## arr_delay is the total amount of delay in minutes
+                 start = c(2019, 1),
+                 end = c(2022, 8),
+                 freq = 12)
+
+arr_delays_dfw.ts <- ts(Airline_Delays_Dfw_sum$Freq  , ## arr_delay is the total amount of delay in minutes
                  start = c(2019, 1),
                  end = c(2022, 8),
                  freq = 12)
@@ -287,7 +299,11 @@ autoplot(arr_delays_pit.ts,
          ylab = 'Airport Delay in Minutes',
          main = 'Delays for Pittsburgh International')
 
-
+autoplot(arr_delays_dfw.ts,
+         series = 'DFW Delays',
+         xlab = 'Date',
+         ylab = 'Airport Delay in Minutes',
+         main = 'Delays for Dallas/Fort Worth International')
 ```
 
 ### Visualizing Time Series -- Broken Down by Carrier
@@ -361,8 +377,8 @@ arr_delays_pit.ts %>%
 
 ```{r Spliting Data}
 
-Airline_Delays_Pit.train <- window(arr_delays_pit.ts, end = c(2022,4))
-Airline_Delays_Pit.test <- window(arr_delays_pit.ts, start = c(2022,5))
+Airline_Delays_Pit.train <- window(arr_delays_pit.ts, end = c(2022,3))
+Airline_Delays_Pit.test <- window(arr_delays_pit.ts, start = c(2022,4))
 
 autoplot(Airline_Delays_Pit.train, series = 'Train') +
   autolayer(Airline_Delays_Pit.test, series = 'Valid')
@@ -371,8 +387,9 @@ autoplot(Airline_Delays_Pit.train, series = 'Train') +
 
 ```{r Modeling Variables}
 
-forecast.periods <- 4
+forecast.periods <- 5
 y <- Airline_Delays_Pit.train
+test.y <- Airline_Delays_Pit.test
 
 ```
 
@@ -421,6 +438,19 @@ autoplot(y, series = 'Training') +
   autolayer(ets.pred, alpha = .3, series = 'Forecast') 
 ```
 
+```{r covid Dummy}
+y
+y.frame <- data.frame(Y=as.matrix(y),date=as.Date(as.yearmon(time(y))))
+y.frame.new <- y.frame  %>%
+  mutate(Covid = ifelse(date > '2020-02-01' & date < '2021-06-01' , 1, 0))
+y.frame.new
+
+test.frame <- data.frame(Y=as.matrix(test.y),date=as.Date(as.yearmon(time(test.y))))
+test.y.frame.new <- test.frame %>%
+  mutate(Covid = ifelse(date > '2020-02-01' & date < '2021-06-01' , 1, 0))
+test.y.frame.new
+```
+
 
 ```{r arima}
 
@@ -435,12 +465,18 @@ y %>%
   diff() %>% 
   ggtsdisplay(main="Second Difference")
 
+pacf(y, lag.max = 300)
+acf(y, lag.max = 300)
+
+acf(diff(diff(y), lag = 12), lag.max = 72)
+pacf(diff(diff(y), lag = 12), lag.max = 72)
+
 #Autoarima
 auto_fit <- auto.arima(y)
 summary(auto_fit)
 
 #Arima
-fit <- arima(y , order=c(3,0,1))
+fit <- arima(y , order=c(0,1,1), seasonal = c(1,1,1))
 summary(fit)
 
 #Residuals
@@ -463,11 +499,27 @@ autoplot(y, series = 'Training') +
 autoplot(fit)
 ```
 
+```{r improved arima}
+
+predictors <- as.matrix(y.frame.new[c("Covid")] )
+predictors.valid <- as.matrix(test.y.frame.new[c("Covid")] )
+
+training_set.arima <- arima(y,
+                            xreg = predictors,
+                            order=c(0,1,1),
+                            seasonal = c(1,1,1))
+
+forecast <- forecast(training_set.arima  ,
+                     xreg = predictors.valid,
+                     h=forecast.periods)
+
+summary(training_set.arima )
+
+autoplot(y, series = 'Training') +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
+  autolayer(forecast, alpha = .3, series = 'Forecast') 
+```
 
 ```{r Testing Area}
-
-
-#out <- Airline_Delays_Pit[(order(as.Date(Airline_Delays_Pit$date))),]
-Airline_Delays_Pit_sum
-
+summary(training_set.arima )
 ```
