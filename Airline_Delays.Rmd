@@ -451,37 +451,14 @@ test.y.frame.new <- test.frame %>%
 test.y.frame.new
 ```
 
-
-```{r arima}
-
-#first difference
-y %>% 
-  diff() %>% 
-  ggtsdisplay(main="First Difference")
-
-#first difference
-y %>% 
-  diff() %>% 
-  diff() %>% 
-  ggtsdisplay(main="Second Difference")
-
-pacf(y, lag.max = 300)
-acf(y, lag.max = 300)
-
-acf(diff(diff(y), lag = 12), lag.max = 72)
-pacf(diff(diff(y), lag = 12), lag.max = 72)
+```{r auto arima}
 
 #Autoarima
 auto_fit <- auto.arima(y)
 summary(auto_fit)
 
-#Arima
-fit <- arima(y , order=c(0,1,1), seasonal = c(1,1,1))
-summary(fit)
-
 #Residuals
 checkresiduals(auto_fit)
-checkresiduals(fit)
 
 #Forecast
 auto.fore <- forecast(auto_fit, h=forecast.periods)
@@ -492,6 +469,47 @@ autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation') +
   autolayer(auto.fore, alpha = .3, series = 'Auto Forecast')
 
+autoplot(auto_fit)
+```
+
+```{r arima tunning}
+#first difference
+y %>% 
+  ggtsdisplay(main="Inital Time Series")
+
+#first  seasona difference
+y %>% 
+  diff(lag = 12) %>% 
+  ggtsdisplay(main="First Seasonal Difference")
+
+#first difference
+y %>% 
+  diff(lag = 12) %>% 
+  diff() %>% 
+  ggtsdisplay(main="One Season Diff, One Non Season Diff")
+
+pacf(y, lag.max = 300)
+acf(y, lag.max = 300)
+
+acf(diff(diff(y), lag = 12), lag.max = 72)
+pacf(diff(diff(y), lag = 12), lag.max = 72)
+```
+
+
+
+```{r arima}
+
+#Arima
+fit <- arima(y , order=c(0,1,1), seasonal = c(1,1,1))
+summary(fit)
+
+#Residuals
+checkresiduals(fit)
+
+#Forecast
+fore <- forecast(fit, h = forecast.periods)
+
+#Plot
 autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(fore, alpha = .3, series = 'Forecast') 
@@ -504,20 +522,22 @@ autoplot(fit)
 predictors <- as.matrix(y.frame.new[c("Covid")] )
 predictors.valid <- as.matrix(test.y.frame.new[c("Covid")] )
 
-training_set.arima <- arima(y,
+fit.predictor <- Arima(y,
                             xreg = predictors,
                             order=c(0,1,1),
                             seasonal = c(1,1,1))
 
-forecast <- forecast(training_set.arima  ,
+forecast <- forecast(fit.predictor,
                      xreg = predictors.valid,
                      h=forecast.periods)
 
-summary(training_set.arima )
+summary(fit.predictor)
 
 autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(forecast, alpha = .3, series = 'Forecast') 
+
+autoplot(fit.predictor)
 ```
 
 ```{r Testing Area}
