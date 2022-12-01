@@ -94,6 +94,7 @@ barplot(table(Airline_Delays$year), main="Bar Graph of Year",
 barplot(table(Airline_Delays$month), main="Bar Graph of Month",
         ylab="Frequency", xlab = "Month")
 
+
 ```
 
 ### Numerical Variables Visualized
@@ -273,6 +274,12 @@ arr_del15_pit.ts <- ts(Airline_Delays_Pit$arr_del15, ## arr_del15 is the number 
                  end = c(2022, 8),
                  freq = 12)
 
+autoplot(arr_del15_pit.ts,
+         series = 'PIT Delays',
+         xlab = 'Date',
+         ylab = 'Airport Delays',
+         main = 'Delays for Pittsburgh International')
+
 #Sum Delays by month
 Airline_Delays_Pit_sum <- Airline_Delays_Pit %>%
   group_by(date) %>%
@@ -418,6 +425,8 @@ autoplot(y, series = 'Training') +
 
 ```
 
+
+
 ```{r ETS}
 
 # Use the ets function with the option model = "AAM" to fit Holt-Winter’s 
@@ -540,6 +549,25 @@ autoplot(y, series = 'Training') +
 autoplot(fit.predictor)
 ```
 
-```{r Testing Area}
+```{r Testing arima}
 summary(training_set.arima )
+```
+
+```{r regression}
+
+plane_lm <- tslm(Airline_Delays_Pit.train ~ season)
+summary(plane_lm)
+
+plane_lm_predict <- forecast(plane_lm, h = forecast.periods)
+
+autoplot(Airline_Delays_Pit.train, series = 'train') +
+  autolayer(Airline_Delays_Pit.test, series = 'actual') +
+  autolayer(plane_lm_predict, series = 'prediction')
+
+```
+
+```{r neuralnetwork}
+
+
+
 ```
