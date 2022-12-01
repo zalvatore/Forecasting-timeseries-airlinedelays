@@ -560,6 +560,9 @@ summary(plane_lm)
 
 plane_lm_predict <- forecast(plane_lm, h = forecast.periods)
 
+accuracy(plane_lm_predict, Airline_Delays_Pit.test)
+
+
 autoplot(Airline_Delays_Pit.train, series = 'train') +
   autolayer(Airline_Delays_Pit.test, series = 'actual') +
   autolayer(plane_lm_predict, series = 'prediction')
@@ -568,6 +571,13 @@ autoplot(Airline_Delays_Pit.train, series = 'train') +
 
 ```{r neuralnetwork}
 
+plane_nnet <- nnetar(Airline_Delays_Pit.train)
+plane_nnet_predict <- forecast(plane_lm, h = forecast.periods)
 
+accuracy(plane_nnet_predict, Airline_Delays_Pit.test)
+
+autoplot(Airline_Delays_Pit.train, series = 'train') +
+  autolayer(Airline_Delays_Pit.test, series = 'actual') +
+  autolayer(plane_nnet_predict, series = 'prediction')
 
 ```
