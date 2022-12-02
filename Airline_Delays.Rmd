@@ -254,7 +254,11 @@ highCorr
 
 ```{r Checking for Outliers}
 
-boxplot(Airline_Delays_Pit$arr_del15, main = "Boxplot")
+boxplot(Airline_Delays_Pit$arr_delay,
+        main = "Boxplot for Delays",
+        xlab = 'PIT',
+        ylab = 'Airport Delay in Minutes'
+        )
 
 subset(Airline_Delays_Pit, arr_flights < arr_del15)
 
@@ -274,12 +278,6 @@ arr_del15_pit.ts <- ts(Airline_Delays_Pit$arr_del15, ## arr_del15 is the number 
                  end = c(2022, 8),
                  freq = 12)
 
-autoplot(arr_del15_pit.ts,
-         series = 'PIT Delays',
-         xlab = 'Date',
-         ylab = 'Airport Delays',
-         main = 'Delays for Pittsburgh International')
-
 #Sum Delays by month
 Airline_Delays_Pit_sum <- Airline_Delays_Pit %>%
   group_by(date) %>%
@@ -289,7 +287,8 @@ Airline_Delays_Dfw_sum <- Airline_Delays_DFW %>%
   group_by(date) %>%
   summarise(Freq = sum(arr_delay))
 
-arr_delays_pit.ts <- ts(Airline_Delays_Pit_sum$Freq  , ## arr_delay is the total amount of delay in minutes
+## arr_delay is the total amount of delay in minutes
+arr_delays_pit.ts <- ts(Airline_Delays_Pit_sum$Freq  , 
                  start = c(2019, 1),
                  end = c(2022, 8),
                  freq = 12)
@@ -387,8 +386,11 @@ arr_delays_pit.ts %>%
 Airline_Delays_Pit.train <- window(arr_delays_pit.ts, end = c(2022,3))
 Airline_Delays_Pit.test <- window(arr_delays_pit.ts, start = c(2022,4))
 
-autoplot(Airline_Delays_Pit.train, series = 'Train') +
-  autolayer(Airline_Delays_Pit.test, series = 'Valid')
+autoplot(Airline_Delays_Pit.train, series = 'Train',
+         xlab = 'Date',
+         ylab = 'Airport Delay in Minutes',
+         main = 'Train/Test Time Series Split')  +
+  autolayer(Airline_Delays_Pit.test, series = 'Test')
 ```
 ## Modeling
 
@@ -411,17 +413,26 @@ naive.season.model <- snaive(y, h = forecast.periods)
 mean.model <- meanf(y, h = forecast.periods)
 
 #Plot
-autoplot(y, series = 'Training') +
-  autolayer(Airline_Delays_Pit.test, series = 'Validation') +
-  autolayer(naive.model, alpha = .3, series = 'Naive') 
+autoplot(y, series = 'Training',
+         xlab = 'Date',
+         ylab = 'Airport Delay in Minutes',
+         main = 'Naive Model') +
+        autolayer(Airline_Delays_Pit.test, series = 'Validation') +
+        autolayer(naive.model, alpha = .3, series = 'Naive') 
+
+accuracy(naive.model, Airline_Delays_Pit.test)
 
 autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation') +
   autolayer(naive.season.model, alpha = .3, series = 'Seasonal Naive') 
 
+accuracy(naive.season.model, Airline_Delays_Pit.test)
+
 autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation') +
   autolayer(mean.model, alpha = .3, series = 'Mean') 
+
+accuracy(mean.model, Airline_Delays_Pit.test)
 
 ```
 
@@ -429,22 +440,24 @@ autoplot(y, series = 'Training') +
 
 ```{r ETS}
 
-# Use the ets function with the option model = "AAM" to fit Holt-Winter’s 
-# exponential smoothing model with additive error, additive trend & multiplicative seasonality
-wine.hwin <- ets(y,
-                 model = "AAM",
-                 alpha = .2,
+# Simple Exponential Model
+ets.model <- ets(y,
+                 model = "ANN",
+                 alpha = 0.9,
                  gamma = .05,
                  restrict = FALSE
                  )
-wine.hwin
+ets.model
 
-ets.pred <- forecast(wine.hwin, h=forecast.periods)
+ets.pred <- forecast(ets.model, h=forecast.periods)
+
+accuracy(ets.pred, Airline_Delays_Pit.test)
 
 #Plot
 autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation') +
   autolayer(ets.pred, alpha = .3, series = 'Forecast') 
+
 ```
 
 ```{r covid Dummy}
@@ -478,30 +491,20 @@ autoplot(y, series = 'Training') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation') +
   autolayer(auto.fore, alpha = .3, series = 'Auto Forecast')
 
-autoplot(auto_fit)
+#autoplot(auto_fit)
+accuracy(auto.fore, Airline_Delays_Pit.test)
 ```
 
 ```{r arima tunning}
-#first difference
-y %>% 
-  ggtsdisplay(main="Inital Time Series")
-
-#first  seasona difference
-y %>% 
-  diff(lag = 12) %>% 
-  ggtsdisplay(main="First Seasonal Difference")
-
-#first difference
-y %>% 
-  diff(lag = 12) %>% 
-  diff() %>% 
-  ggtsdisplay(main="One Season Diff, One Non Season Diff")
-
-pacf(y, lag.max = 300)
 acf(y, lag.max = 300)
+acf(diff(y, lag = 12), lag.max = 72)
+acf(diff(diff(y, lag = 12)), lag.max = 72)
 
-acf(diff(diff(y), lag = 12), lag.max = 72)
-pacf(diff(diff(y), lag = 12), lag.max = 72)
+pacf(y, lag.max = 72)
+pacf(diff(y, lag = 12), lag.max = 72)
+pacf(diff(diff(y, lag = 12)), lag.max = 72)
+
+autoplot(diff(diff(y, lag = 12)))
 ```
 
 
@@ -509,7 +512,8 @@ pacf(diff(diff(y), lag = 12), lag.max = 72)
 ```{r arima}
 
 #Arima
-fit <- arima(y , order=c(0,1,1), seasonal = c(1,1,1))
+fit <- arima(y , order=c(0,1,1), seasonal = c(0,1,1))
+
 summary(fit)
 
 #Residuals
@@ -519,11 +523,15 @@ checkresiduals(fit)
 fore <- forecast(fit, h = forecast.periods)
 
 #Plot
-autoplot(y, series = 'Training') +
+autoplot(y, series = 'Training',
+         xlab = 'Date',
+         ylab = 'Airport Delay in Minutes',
+         main = 'Arima Model (0,1,1), (0,1,1)') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(fore, alpha = .3, series = 'Forecast') 
 
-autoplot(fit)
+#autoplot(fit)
+accuracy(fore, Airline_Delays_Pit.test)
 ```
 
 ```{r improved arima}
@@ -533,7 +541,7 @@ predictors.valid <- as.matrix(test.y.frame.new[c("Covid")] )
 
 fit.predictor <- Arima(y,
                             xreg = predictors,
-                            order=c(0,1,1),
+                            order=c(0,1,0),
                             seasonal = c(1,1,1))
 
 forecast <- forecast(fit.predictor,
@@ -542,16 +550,19 @@ forecast <- forecast(fit.predictor,
 
 summary(fit.predictor)
 
-autoplot(y, series = 'Training') +
+autoplot(y, series = 'Training',
+         xlab = 'Date',
+         ylab = 'Airport Delay in Minutes',
+         main = 'Arima Model (0,1,1),(0,1,1) with COVID Predictor')  +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
-  autolayer(forecast, alpha = .3, series = 'Forecast') 
+  autolayer(forecast, alpha = .3, series = 'Forecast')  
 
-autoplot(fit.predictor)
+accuracy(forecast, Airline_Delays_Pit.test)
+
+#autoplot(fit.predictor)
 ```
 
-```{r Testing arima}
-summary(training_set.arima )
-```
+
 
 ```{r regression}
 
@@ -579,5 +590,12 @@ accuracy(plane_nnet_predict, Airline_Delays_Pit.test)
 autoplot(Airline_Delays_Pit.train, series = 'train') +
   autolayer(Airline_Delays_Pit.test, series = 'actual') +
   autolayer(plane_nnet_predict, series = 'prediction')
+
+autoplot(y, series = 'Training',
+         xlab = 'Date',
+         ylab = 'Airport Delay in Minutes',
+         main = 'Neuralnetwork Model')  +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
+  autolayer(plane_nnet_predict, alpha = .3, series = 'Forecast')  
 
 ```
