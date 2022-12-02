@@ -460,18 +460,7 @@ autoplot(y, series = 'Training') +
 
 ```
 
-```{r covid Dummy}
-y
-y.frame <- data.frame(Y=as.matrix(y),date=as.Date(as.yearmon(time(y))))
-y.frame.new <- y.frame  %>%
-  mutate(Covid = ifelse(date > '2020-02-01' & date < '2021-06-01' , 1, 0))
-y.frame.new
 
-test.frame <- data.frame(Y=as.matrix(test.y),date=as.Date(as.yearmon(time(test.y))))
-test.y.frame.new <- test.frame %>%
-  mutate(Covid = ifelse(date > '2020-02-01' & date < '2021-06-01' , 1, 0))
-test.y.frame.new
-```
 
 ```{r auto arima}
 
@@ -533,11 +522,23 @@ autoplot(y, series = 'Training',
 #autoplot(fit)
 accuracy(fore, Airline_Delays_Pit.test)
 ```
+```{r covid Dummy}
+y
+y.frame <- data.frame(Y=as.matrix(y),date=as.Date(as.yearmon(time(y))))
+y.frame.covid <- y.frame  %>%
+  mutate(Covid = ifelse(date > '2020-02-01' & date < '2021-06-01' , 1, 0))
+y.frame.covid
+
+test.frame <- data.frame(Y=as.matrix(test.y),date=as.Date(as.yearmon(time(test.y))))
+test.y.frame.covid <- test.frame %>%
+  mutate(Covid = ifelse(date > '2020-02-01' & date < '2021-06-01' , 1, 0))
+test.y.frame.covid
+```
 
 ```{r improved arima}
 
-predictors <- as.matrix(y.frame.new[c("Covid")] )
-predictors.valid <- as.matrix(test.y.frame.new[c("Covid")] )
+predictors <- as.matrix(y.frame.covid[c("Covid")] )
+predictors.valid <- as.matrix(test.y.frame.covid[c("Covid")] )
 
 fit.predictor <- Arima(y,
                             xreg = predictors,
