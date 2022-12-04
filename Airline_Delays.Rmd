@@ -594,21 +594,21 @@ plane_nnet_pred <- nnetar(y,
                       p=0,
                       P=1,
                       size = 1
-                      #xreg = predictors
+                      ,xreg = predictors
                       )   
 
 plane_nnet_predict_pred <- forecast(plane_nnet_pred, 
                                h = forecast.periods
-                               #xreg=predictors.valid
+                               ,xreg=predictors.valid
                                )
 
-accuracy(plane_nnet_predict, Airline_Delays_Pit.test)
+accuracy(plane_nnet_predict_pred, Airline_Delays_Pit.test)
 
 autoplot(y, series = 'Training',
          xlab = 'Date',
          ylab = 'Airport Delay in Minutes',
          main = 'Neural Network Model')  +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
-  autolayer(plane_nnet_predict, alpha = .3, series = 'Forecast')  
+  autolayer(plane_nnet_predict_pred, alpha = .3, series = 'Forecast')  
 
 ```
