@@ -454,7 +454,10 @@ ets.pred <- forecast(ets.model, h=forecast.periods)
 accuracy(ets.pred, Airline_Delays_Pit.test)
 
 #Plot
-autoplot(y, series = 'Training') +
+autoplot(y, series = 'Training',
+         xlab = 'Date',
+         ylab = 'Airport Delay in Minutes',
+         main = 'ETS Model') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation') +
   autolayer(ets.pred, alpha = .3, series = 'Forecast') 
 
@@ -473,7 +476,7 @@ checkresiduals(auto_fit)
 
 #Forecast
 auto.fore <- forecast(auto_fit, h=forecast.periods)
-fore <- forecast(fit, h = forecast.periods)
+#fore <- forecast(fit, h = forecast.periods)
 
 #Plot
 autoplot(y, series = 'Training') +
@@ -541,9 +544,9 @@ predictors <- as.matrix(y.frame.covid[c("Covid")] )
 predictors.valid <- as.matrix(test.y.frame.covid[c("Covid")] )
 
 fit.predictor <- Arima(y,
-                            xreg = predictors,
-                            order=c(0,1,0),
-                            seasonal = c(1,1,1))
+                       xreg = predictors,
+                       order=c(0,1,0),
+                       seasonal = c(1,1,1))
 
 forecast <- forecast(fit.predictor,
                      xreg = predictors.valid,
@@ -554,7 +557,7 @@ summary(fit.predictor)
 autoplot(y, series = 'Training',
          xlab = 'Date',
          ylab = 'Airport Delay in Minutes',
-         main = 'Arima Model (0,1,1),(0,1,1) with COVID Predictor')  +
+         main = 'Arima Model (0,1,0),(1,1,1) with COVID Predictor')  +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(forecast, alpha = .3, series = 'Forecast')  
 
@@ -574,28 +577,37 @@ plane_lm_predict <- forecast(plane_lm, h = forecast.periods)
 
 accuracy(plane_lm_predict, Airline_Delays_Pit.test)
 
-
-autoplot(Airline_Delays_Pit.train, series = 'train') +
-  autolayer(Airline_Delays_Pit.test, series = 'actual') +
-  autolayer(plane_lm_predict, series = 'prediction')
+autoplot(y, series = 'Training',
+         xlab = 'Date',
+         ylab = 'Airport Delay in Minutes',
+         main = 'Regression Model')  +
+  autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
+  autolayer(plane_lm_predict, alpha = .3, series = 'Forecast')  
 
 ```
 
 ```{r neuralnetwork}
 
 plane_nnet <- nnetar(Airline_Delays_Pit.train)
-plane_nnet_predict <- forecast(plane_lm, h = forecast.periods)
+
+plane_nnet_pred <- nnetar(y,
+                      p=0,
+                      P=1,
+                      size = 1
+                      #xreg = predictors
+                      )   
+
+plane_nnet_predict_pred <- forecast(plane_nnet_pred, 
+                               h = forecast.periods
+                               #xreg=predictors.valid
+                               )
 
 accuracy(plane_nnet_predict, Airline_Delays_Pit.test)
-
-autoplot(Airline_Delays_Pit.train, series = 'train') +
-  autolayer(Airline_Delays_Pit.test, series = 'actual') +
-  autolayer(plane_nnet_predict, series = 'prediction')
 
 autoplot(y, series = 'Training',
          xlab = 'Date',
          ylab = 'Airport Delay in Minutes',
-         main = 'Neuralnetwork Model')  +
+         main = 'Neural Network Model')  +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(plane_nnet_predict, alpha = .3, series = 'Forecast')  
 
