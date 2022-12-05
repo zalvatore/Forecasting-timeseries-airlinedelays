@@ -257,7 +257,7 @@ highCorr
 boxplot(Airline_Delays_Pit$arr_delay,
         main = "Boxplot for Delays",
         xlab = 'PIT',
-        ylab = 'Airport Delay in Minutes'
+        ylab = 'Airport Delays'
         )
 
 subset(Airline_Delays_Pit, arr_flights < arr_del15)
@@ -302,13 +302,13 @@ arr_delays_dfw.ts <- ts(Airline_Delays_Dfw_sum$Freq  , ## arr_delay is the total
 autoplot(arr_delays_pit.ts,
          series = 'PIT Delays',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'Delays for Pittsburgh International')
 
 autoplot(arr_delays_dfw.ts,
          series = 'DFW Delays',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'Delays for Dallas/Fort Worth International')
 ```
 
@@ -388,7 +388,7 @@ Airline_Delays_Pit.test <- window(arr_delays_pit.ts, start = c(2022,4))
 
 autoplot(Airline_Delays_Pit.train, series = 'Train',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'Train/Test Time Series Split')  +
   autolayer(Airline_Delays_Pit.test, series = 'Test')
 ```
@@ -415,7 +415,7 @@ mean.model <- meanf(y, h = forecast.periods)
 #Plot
 autoplot(y, series = 'Training',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'Naive Model') +
         autolayer(Airline_Delays_Pit.test, series = 'Validation') +
         autolayer(naive.model, alpha = .3, series = 'Naive') 
@@ -456,7 +456,7 @@ accuracy(ets.pred, Airline_Delays_Pit.test)
 #Plot
 autoplot(y, series = 'Training',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'ETS Model') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation') +
   autolayer(ets.pred, alpha = .3, series = 'Forecast') 
@@ -517,7 +517,7 @@ fore <- forecast(fit, h = forecast.periods)
 #Plot
 autoplot(y, series = 'Training',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'Arima Model (0,1,1), (0,1,1)') +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(fore, alpha = .3, series = 'Forecast') 
@@ -556,7 +556,7 @@ summary(fit.predictor)
 
 autoplot(y, series = 'Training',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'Arima Model (0,1,0),(1,1,1) with COVID Predictor')  +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(forecast, alpha = .3, series = 'Forecast')  
@@ -579,7 +579,7 @@ accuracy(plane_lm_predict, Airline_Delays_Pit.test)
 
 autoplot(y, series = 'Training',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'Regression Model')  +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(plane_lm_predict, alpha = .3, series = 'Forecast')  
@@ -606,7 +606,7 @@ accuracy(plane_nnet_predict_pred, Airline_Delays_Pit.test)
 
 autoplot(y, series = 'Training',
          xlab = 'Date',
-         ylab = 'Airport Delay in Minutes',
+         ylab = 'Airport Delays',
          main = 'Neural Network Model')  +
   autolayer(Airline_Delays_Pit.test, series = 'Validation')  +
   autolayer(plane_nnet_predict_pred, alpha = .3, series = 'Forecast')  
